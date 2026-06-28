@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur Épargne — BNP & Belfius</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #171b26;
+    --bg3: #1e2333;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8eaf0;
+    --text2: #8b90a0;
+    --text3: #555a6a;
+    --plus: #c9a227;
+    --plus-bg: rgba(201,162,39,0.10);
+    --boost: #4f9cf9;
+    --boost-bg: rgba(79,156,249,0.10);
+    --flow: #3ecf8e;
+    --flow-bg: rgba(62,207,142,0.10);
+    --total: #a78bfa;
+    --total-bg: rgba(167,139,250,0.10);
+    --font: 'Inter', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; padding: 32px 20px 60px; }
+
+  .container { max-width: 860px; margin: 0 auto; }
+
+  header { margin-bottom: 36px; }
+  header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 6px; }
+  header p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+  .badge { display: inline-block; font-size: 10px; font-weight: 500; padding: 2px 8px; border-radius: 20px; font-family: var(--mono); letter-spacing: 0.5px; margin-right: 6px; }
+  .badge-plus { background: var(--plus-bg); color: var(--plus); border: 1px solid rgba(201,162,39,0.25); }
+  .badge-boost { background: var(--boost-bg); color: var(--boost); border: 1px solid rgba(79,156,249,0.25); }
+  .badge-flow { background: var(--flow-bg); color: var(--flow); border: 1px solid rgba(62,207,142,0.25); }
+
+  /* Controls */
+  .controls { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+  .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media (max-width: 600px) { .controls-grid { grid-template-columns: 1fr; } }
+
+  .ctrl { display: flex; flex-direction: column; gap: 8px; }
+  .ctrl-header { display: flex; justify-content: space-between; align-items: center; }
+  .ctrl-label { font-size: 12px; color: var(--text2); }
+  .ctrl-value { font-size: 14px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+  .ctrl-value.c-plus { color: var(--plus); }
+  .ctrl-value.c-boost { color: var(--boost); }
+  .ctrl-value.c-flow { color: var(--flow); }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 4px; border-radius: 2px;
+    background: var(--border2); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--text); border: 2px solid var(--bg2); cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.2); }
+  input[type=range].r-plus::-webkit-slider-thumb { background: var(--plus); }
+  input[type=range].r-boost::-webkit-slider-thumb { background: var(--boost); }
+  input[type=range].r-flow::-webkit-slider-thumb { background: var(--flow); }
+
+  /* Account cards */
+  .cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  @media (max-width: 700px) { .cards { grid-template-columns: 1fr; } }
+
+  .card { border-radius: 14px; padding: 18px; border: 1px solid var(--border); background: var(--bg2); }
+  .card.plus { border-color: rgba(201,162,39,0.2); background: linear-gradient(135deg, var(--plus-bg) 0%, var(--bg2) 60%); }
+  .card.boost { border-color: rgba(79,156,249,0.2); background: linear-gradient(135deg, var(--boost-bg) 0%, var(--bg2) 60%); }
+  .card.flow { border-color: rgba(62,207,142,0.2); background: linear-gradient(135deg, var(--flow-bg) 0%, var(--bg2) 60%); }
+
+  .card-title { font-size: 11px; font-weight: 500; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 14px; }
+  .card-title.plus { color: var(--plus); }
+  .card-title.boost { color: var(--boost); }
+  .card-title.flow { color: var(--flow); }
+
+  .card-amount { font-size: 24px; font-weight: 600; font-family: var(--mono); letter-spacing: -0.5px; margin-bottom: 4px; }
+  .card-amount.plus { color: var(--plus); }
+  .card-amount.boost { color: var(--boost); }
+  .card-amount.flow { color: var(--flow); }
+
+  .card-sub { font-size: 12px; color: var(--text2); margin-bottom: 14px; }
+  .card-interest { font-size: 12px; font-family: var(--mono); padding: 6px 10px; border-radius: 8px; display: inline-block; }
+  .card-interest.plus { background: var(--plus-bg); color: var(--plus); }
+  .card-interest.boost { background: var(--boost-bg); color: var(--boost); }
+  .card-interest.flow { background: var(--flow-bg); color: var(--flow); }
+
+  .card-divider { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+  .card-row { display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0; }
+  .card-row span:first-child { color: var(--text3); }
+  .card-row span:last-child { color: var(--text2); font-family: var(--mono); }
+
+  /* Table */
+  .table-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead { background: var(--bg3); }
+  th { padding: 12px 16px; text-align: right; color: var(--text3); font-weight: 500; font-size: 11px; letter-spacing: 0.3px; border-bottom: 1px solid var(--border); }
+  th:first-child { text-align: left; }
+  td { padding: 12px 16px; text-align: right; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  td:first-child { text-align: left; font-family: var(--font); font-weight: 500; color: var(--text); font-size: 12px; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tr.last-row td { color: var(--text); font-weight: 600; background: rgba(167,139,250,0.06); border-top: 1px solid rgba(167,139,250,0.2); }
+  tr.last-row td:last-child { color: var(--total); font-size: 14px; }
+  .td-plus { color: var(--plus) !important; }
+  .td-boost { color: var(--boost) !important; }
+  .td-flow { color: var(--flow) !important; }
+
+  /* Total banner */
+  .total-banner { background: var(--total-bg); border: 1px solid rgba(167,139,250,0.25); border-radius: 16px; padding: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 600px) { .total-banner { grid-template-columns: 1fr 1fr; } }
+  .total-item { display: flex; flex-direction: column; gap: 4px; }
+  .total-item-label { font-size: 11px; color: var(--text3); }
+  .total-item-val { font-size: 15px; font-weight: 600; font-family: var(--mono); color: var(--text); }
+  .total-item-val.big { font-size: 22px; color: var(--total); }
+
+  .section-label { font-size: 11px; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 12px; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Simulateur épargne</h1>
+    <p>
+      <span class="badge badge-plus">ÉPARGNE PLUS</span> BNP — capital 48.000 € &nbsp;·&nbsp;
+      <span class="badge badge-boost">BOOST</span> BNP — max 500 €/mois &nbsp;·&nbsp;
+      <span class="badge badge-flow">FLOW</span> Belfius — max 600 €/mois
+    </p>
+  </header>
+
+  <div class="section-label">Paramètres</div>
+  <div class="controls">
+    <div class="controls-grid">
+      <div class="ctrl">
+        <div class="ctrl-header">
+          <span class="ctrl-label">Capital Épargne Plus (BNP, 1 %)</span>
+          <span class="ctrl-value c-plus" id="v-capital">48.000 €</span>
+        </div>
+        <input type="range" class="r-plus" id="s-capital" min="10000" max="100000" step="1000" value="48000" oninput="update()">
+      </div>
+      <div class="ctrl">
+        <div class="ctrl-header">
+          <span class="ctrl-label">Versement Boost BNP (max 500 €/mois)</span>
+          <span class="ctrl-value c-boost" id="v-boost">500 €/mois</span>
+        </div>
+        <input type="range" class="r-boost" id="s-boost" min="0" max="500" step="50" value="500" oninput="update()">
+      </div>
+      <div class="ctrl">
+        <div class="ctrl-header">
+          <span class="ctrl-label">Versement Flow Belfius (max 600 €/mois)</span>
+          <span class="ctrl-value c-flow" id="v-flow">600 €/mois</span>
+        </div>
+        <input type="range" class="r-flow" id="s-flow" min="0" max="600" step="50" value="600" oninput="update()">
+      </div>
+      <div class="ctrl">
+        <div class="ctrl-header">
+          <span class="ctrl-label">Horizon</span>
+          <span class="ctrl-value" id="v-horizon">3 ans</span>
+        </div>
+        <input type="range" id="s-horizon" min="1" max="10" step="1" value="3" oninput="update()">
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">Capital par compte à l'échéance</div>
+  <div class="cards" id="cards"></div>
+
+  <div class="section-label">Évolution annuelle</div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Année</th>
+          <th style="color:var(--plus)">Épargne Plus</th>
+          <th style="color:var(--boost)">Boost BNP</th>
+          <th style="color:var(--flow)">Flow Belfius</th>
+          <th style="color:var(--total)">Total</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="section-label">Résumé</div>
+  <div class="total-banner" id="banner"></div>
+
+</div>
+
+<script>
+function fmt(n) { return Math.round(n).toLocaleString('fr-BE') + ' €'; }
+function fmtI(n) { return (n >= 0 ? '+' : '') + Math.round(n).toLocaleString('fr-BE') + ' €'; }
+
+function calc(rate, start, monthly, months) {
+  let c = start, mr = rate / 12;
+  for (let i = 0; i < months; i++) c = c * (1 + mr) + monthly;
+  return c;
+}
+
+function update() {
+  const capital = parseInt(document.getElementById('s-capital').value);
+  const boost   = parseInt(document.getElementById('s-boost').value);
+  const flow    = parseInt(document.getElementById('s-flow').value);
+  const horizon = parseInt(document.getElementById('s-horizon').value);
+  const months  = horizon * 12;
+
+  document.getElementById('v-capital').textContent = fmt(capital);
+  document.getElementById('v-boost').textContent   = boost + ' €/mois';
+  document.getElementById('v-flow').textContent    = flow  + ' €/mois';
+  document.getElementById('v-horizon').textContent = horizon + ' an' + (horizon > 1 ? 's' : '');
+
+  const R_PLUS  = 0.010;
+  const R_BOOST = 0.029;
+  const R_FLOW  = 0.028;
+
+  const plusEnd  = calc(R_PLUS,  capital, 0,     months);
+  const boostEnd = calc(R_BOOST, 0,       boost, months);
+  const flowEnd  = calc(R_FLOW,  0,       flow,  months);
+  const totalEnd = plusEnd + boostEnd + flowEnd;
+
+  const plusInt  = Math.round(plusEnd  - capital);
+  const boostInt = Math.round(boostEnd - boost * months);
+  const flowInt  = Math.round(flowEnd  - flow  * months);
+  const totalInt = plusInt + boostInt + flowInt;
+
+  const boostPoured = boost * months;
+  const flowPoured  = flow  * months;
+  const totalPoured = capital + boostPoured + flowPoured;
+  const mensuel     = boost + flow;
+
+  // Cards
+  document.getElementById('cards').innerHTML = `
+    <div class="card plus">
+      <div class="card-title plus">Épargne Plus — BNP</div>
+      <div class="card-amount plus">${fmt(Math.round(plusEnd))}</div>
+      <div class="card-sub">Capital de départ ${fmt(capital)}</div>
+      <span class="card-interest plus">${fmtI(plusInt)} intérêts</span>
+      <hr class="card-divider">
+      <div class="card-row"><span>Taux total</span><span>1,00 %</span></div>
+      <div class="card-row"><span>Versements mensuels</span><span>0 €</span></div>
+      <div class="card-row"><span>Retrait anticipé</span><span>0,15 % base</span></div>
+    </div>
+    <div class="card boost">
+      <div class="card-title boost">Boost — BNP (elle)</div>
+      <div class="card-amount boost">${fmt(Math.round(boostEnd))}</div>
+      <div class="card-sub">${boost} €/mois × ${months} mois</div>
+      <span class="card-interest boost">${fmtI(boostInt)} intérêts</span>
+      <hr class="card-divider">
+      <div class="card-row"><span>Taux total</span><span>2,90 %</span></div>
+      <div class="card-row"><span>Versements cumulés</span><span>${fmt(boostPoured)}</span></div>
+      <div class="card-row"><span>Retrait anticipé</span><span>1,40 % base</span></div>
+    </div>
+    <div class="card flow">
+      <div class="card-title flow">Flow — Belfius (vous)</div>
+      <div class="card-amount flow">${fmt(Math.round(flowEnd))}</div>
+      <div class="card-sub">${flow} €/mois × ${months} mois</div>
+      <span class="card-interest flow">${fmtI(flowInt)} intérêts</span>
+      <hr class="card-divider">
+      <div class="card-row"><span>Taux total</span><span>2,80 %</span></div>
+      <div class="card-row"><span>Versements cumulés</span><span>${fmt(flowPoured)}</span></div>
+      <div class="card-row"><span>Retrait anticipé</span><span>1,30 % base</span></div>
+    </div>`;
+
+  // Table
+  let rows = '';
+  for (let y = 1; y <= horizon; y++) {
+    const m  = y * 12;
+    const p  = calc(R_PLUS,  capital, 0,     m);
+    const b  = calc(R_BOOST, 0,       boost, m);
+    const f  = calc(R_FLOW,  0,       flow,  m);
+    const t  = p + b + f;
+    const isLast = y === horizon;
+    rows += `<tr class="${isLast ? 'last-row' : ''}">
+      <td>Fin année ${y}</td>
+      <td class="td-plus">${fmt(Math.round(p))}</td>
+      <td class="td-boost">${fmt(Math.round(b))}</td>
+      <td class="td-flow">${fmt(Math.round(f))}</td>
+      <td>${fmt(Math.round(t))}</td>
+    </tr>`;
+  }
+  document.getElementById('tbody').innerHTML = rows;
+
+  // Banner
+  document.getElementById('banner').innerHTML = `
+    <div class="total-item">
+      <span class="total-item-label">Capital de départ</span>
+      <span class="total-item-val">${fmt(capital)}</span>
+    </div>
+    <div class="total-item">
+      <span class="total-item-label">Versements mensuels</span>
+      <span class="total-item-val">${mensuel} €/mois</span>
+    </div>
+    <div class="total-item">
+      <span class="total-item-label">Intérêts générés</span>
+      <span class="total-item-val">+${fmt(totalInt)}</span>
+    </div>
+    <div class="total-item">
+      <span class="total-item-label">Capital final total</span>
+      <span class="total-item-val big">${fmt(Math.round(totalEnd))}</span>
+    </div>`;
+}
+
+update();
+</script>
+</body>
+</html>
